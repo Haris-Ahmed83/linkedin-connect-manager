@@ -1,4 +1,4 @@
-import time, random
+import time, random, os
 from config import LINKEDIN_USERNAME, LINKEDIN_PASSWORD, MAX_ACCEPT_PER_RUN, MIN_DELAY_SEC, MAX_DELAY_SEC
 from message_template import get_message
 from playwright.sync_api import sync_playwright
@@ -22,8 +22,11 @@ def run():
         )
         page = context.new_page()
 
-        print("Logging in...")
-        page.goto("https://www.linkedin.com/login", timeout=30000)
+        print("Navigating to LinkedIn login...")
+        page.goto("https://www.linkedin.com/login", timeout=60000, wait_until="domcontentloaded")
+        time.sleep(3)
+
+        page.wait_for_selector("#username", timeout=15000)
         page.fill("#username", LINKEDIN_USERNAME)
         random_delay()
         page.fill("#password", LINKEDIN_PASSWORD)
@@ -31,68 +34,63 @@ def run():
         page.click("button[type=submit]")
         time.sleep(5)
 
-        if "checkpoint" in page.url or "challenge" in page.url:
-            print("Login blocked! Challenge/2FA page detected. Skipping run.")
+        current_url = page.url
+        print(f"After login URL: {current_url}")
+
+        if "checkpoint" in current_url or "challenge" in current_url:
+            print("Login blocked! Challenge/2FA page detected.")
+            page.screenshot(path="debug_challenge.png")
             browser.close()
             return
 
-        if "feed" not in page.url and "mynetwork" not in page.url:
-            print(f"Login may have failed. Current URL: {page.url}")
+        if "feed" not in current_url and "mynetwork" not in current_url:
+            page.screenshot(path="debug_login_fail.png")
+            print(f"Login may have failed. Page title: {page.title()}")
             browser.close()
             return
 
         print("Login successful.")
 
-        page.goto("https://www.linkedin.com/mynetwork/", timeout=30000)
+        page.goto("https://www.linkedin.com/mynetwork/", timeout=30000, wait_until="domcontentloaded")
         time.sleep(4)
 
-        accept_buttons = page.query_selector_all("button[aria-label^='Accept']")
+        accept_buttons = page.query_selector_all("button:has-text('Accept')")
         if not accept_buttons:
-            accept_buttons = page.query_selector_all("button:has-text('Accept')")
+            accept_buttons = page.query_selector_all("[aria-label*='Accept']")
 
         print(f"Pending requests found: {len(accept_buttons)}")
         to_accept = accept_buttons[:MAX_ACCEPT_PER_RUN]
-        accepted_urns = []
 
-        for btn in to_accept:
+        for i, btn in enumerate(to_accept):
             try:
-                name_el = page.evaluate("""
-                    (btn) => {
-                        const card = btn.closest('li') || btn.closest('div');
-                        if (!card) return '';
-                        const spans = card.querySelectorAll('span');
-                        for (const s of spans) {
-                            if (s.textContent.trim().length > 3) return s.textContent.trim();
-                        }
-                        return '';
-                    }
-                """, btn)
                 btn.click()
                 random_delay()
                 total_accepted += 1
-                print(f"  Accepted: {name_el or 'unknown'}")
+                print(f"  Accepted ({i+1}/{len(to_accept)})")
 
                 msg_btn = page.query_selector("button:has-text('Message')")
                 if msg_btn:
                     msg_btn.click()
                     time.sleep(2)
-                    textarea = page.query_selector("div[role='textbox']")
-                    if textarea:
-                        textarea.fill(get_message())
+                    editor = page.query_selector("div[contenteditable='true'][role='textbox'], div.editor, div[data-placeholder]")
+                    if editor:
+                        editor.fill(get_message())
                         random_delay()
                         send_btn = page.query_selector("button:has-text('Send')")
                         if send_btn:
                             send_btn.click()
                             total_messaged += 1
-                            print(f"  Message sent to: {name_el or 'unknown'}")
+                            print(f"  Message sent ({total_messaged})")
                             random_delay()
-                    close_btn = page.query_selector("button[aria-label='Close']")
+                    close_btn = page.query_selector("button[aria-label='Close'], button:has-text('Close')")
                     if close_btn:
                         close_btn.click()
                         time.sleep(1)
+                else:
+                    print("  No message button found, skipping message")
 
             except Exception as e:
-                print(f"  Error on accept: {e}")
+                print(f"  Error: {e}")
                 continue
 
         browser.close()
