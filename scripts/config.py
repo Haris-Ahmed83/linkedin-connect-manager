@@ -1,0 +1,20 @@
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+LINKEDIN_CLIENT_ID = os.getenv("LINKEDIN_CLIENT_ID")
+LINKEDIN_CLIENT_SECRET = os.getenv("LINKEDIN_CLIENT_SECRET")
+LINKEDIN_ACCESS_TOKEN = os.getenv("LINKEDIN_ACCESS_TOKEN")
+LINKEDIN_REFRESH_TOKEN = os.getenv("LINKEDIN_REFRESH_TOKEN")
+LINKEDIN_USER_URN = os.getenv("LINKEDIN_USER_URN")
+
+GH_PAT = os.getenv("GH_PAT")
+
+REPO_OWNER = "Haris-Ahmed83"
+REPO_NAME = "linkedin-connect-manager"
+SECRET_NAME = "LINKEDIN_ACCESS_TOKEN"
+
+CONNECTIONS_FILE = "data/known_connections.json"
+RATE_LIMIT_SLEEP = 1.5
+TOKEN_REFRESH_BUFFER_DAYS = 5
