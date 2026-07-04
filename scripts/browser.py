@@ -1,4 +1,4 @@
-import time, random, os
+import time, random
 from config import LINKEDIN_USERNAME, LINKEDIN_PASSWORD, MAX_ACCEPT_PER_RUN, MIN_DELAY_SEC, MAX_DELAY_SEC
 from message_template import get_message
 from playwright.sync_api import sync_playwright
@@ -15,7 +15,10 @@ def run():
     total_messaged = 0
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
+        browser = p.chromium.launch(
+            headless=False,
+            args=["--window-position=-32000,-32000"]
+        )
         context = browser.new_context(
             viewport={"width": 1280, "height": 800},
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
@@ -25,57 +28,66 @@ def run():
         print("Opening LinkedIn login page...")
         page.goto("https://www.linkedin.com/login", timeout=60000)
         time.sleep(4)
-
         print(f"URL: {page.url}")
 
-        email_inputs = page.locator("input[type='email']").all()
-        email_input = None
-        for inp in email_inputs:
+        # Find visible email input
+        email_inp = None
+        for inp in page.locator("input[type='email']").all():
             if inp.is_visible():
-                email_input = inp
+                email_inp = inp
+                break
+        if not email_inp:
+            for inp in page.locator("input:not([type='hidden'])").all():
+                t = inp.get_attribute("type")
+                if t in ("email", "text", "") and inp.is_visible():
+                    email_inp = inp
+                    break
+
+        pw_inp = None
+        for inp in page.locator("input[type='password']").all():
+            if inp.is_visible():
+                pw_inp = inp
                 break
 
-        password_inputs = page.locator("input[type='password']").all()
-        password_input = None
-        for inp in password_inputs:
-            if inp.is_visible():
-                password_input = inp
-                break
-
-        if email_input and password_input:
-            email_input.fill(LINKEDIN_USERNAME)
+        if email_inp and pw_inp:
+            email_inp.fill(LINKEDIN_USERNAME)
             random_delay()
-            password_input.fill(LINKEDIN_PASSWORD)
+            pw_inp.fill(LINKEDIN_PASSWORD)
             random_delay()
-
-            time.sleep(3)
-            print(f"After fill: {page.url}")
-
-            if "/feed" in page.url:
-                print("Login succeeded during fill!")
-            else:
-                try:
-                    page.click("button[type=submit]", timeout=5000)
-                except:
-                    print("Submit button click timed out, checking URL...")
-                time.sleep(3)
-                print(f"After submit: {page.url}")
-
-            if "checkpoint" in page.url or "challenge" in page.url:
-                print("Challenge page detected. Please solve manually.")
-                browser.close()
-                return
-
-            if "feed" in page.url:
-                print("Login successful!")
-            else:
-                print(f"Login issue. URL: {page.url}")
-                browser.close()
-                return
+            print("Credentials filled.")
         else:
-            print("Login fields not found!")
+            print(f"Fields not found. email={email_inp is not None}, pw={pw_inp is not None}")
             browser.close()
             return
+
+        # Submit: try different methods
+        submit_btn = page.locator("button[type=submit]")
+        if submit_btn.is_visible() and submit_btn.is_enabled():
+            submit_btn.click()
+            print("Clicked submit button.")
+        else:
+            page.keyboard.press("Enter")
+            print("Pressed Enter.")
+
+        page.wait_for_timeout(3000)
+        for _ in range(10):
+            if "feed" in page.url:
+                break
+            page.wait_for_timeout(1000)
+
+        print(f"After login: {page.url}")
+
+        if "checkpoint" in page.url or "challenge" in page.url:
+            print("Challenge page detected.")
+            browser.close()
+            return
+
+        if "feed" not in page.url:
+            print(f"Login issue.")
+            browser.close()
+            return
+
+        print("Login successful!")
 
         page.goto("https://www.linkedin.com/mynetwork/", timeout=30000)
         time.sleep(4)
@@ -91,7 +103,6 @@ def run():
                 random_delay()
                 total_accepted += 1
                 print(f"Accepted {total_accepted}")
-
                 msg_btn = page.query_selector("button:has-text('Message')")
                 if msg_btn:
                     msg_btn.click()
@@ -104,7 +115,6 @@ def run():
                         if send_btn:
                             send_btn.click()
                             total_messaged += 1
-                            print(f"Messaged {total_messaged}")
                             random_delay()
                     close_btn = page.query_selector("button[aria-label='Close']")
                     if close_btn:
