@@ -22,14 +22,36 @@ def run():
         )
         page = context.new_page()
 
-        print("Navigating to LinkedIn login...")
-        page.goto("https://www.linkedin.com/login", timeout=60000, wait_until="domcontentloaded")
+        print("Navigating to LinkedIn...")
+        page.goto("https://www.linkedin.com/", timeout=60000, wait_until="domcontentloaded")
         time.sleep(3)
 
-        page.wait_for_selector("#username", timeout=15000)
-        page.fill("#username", LINKEDIN_USERNAME)
+        current_url = page.url
+        print(f"Current URL: {current_url}")
+
+        if "/login" in current_url:
+            print("Already on login page. Filling credentials...")
+        else:
+            signin_btn = page.query_selector("a[href*='login'], a:has-text('Sign in'), a:has-text('Sign In')")
+            if signin_btn:
+                print("Clicking Sign in button...")
+                signin_btn.click()
+                time.sleep(3)
+
+        page.wait_for_selector("input[name='session_key'], input[name='username'], #username", timeout=20000)
+
+        username_input = page.query_selector("input[name='session_key']") or page.query_selector("#username")
+        password_input = page.query_selector("input[name='session_password']") or page.query_selector("#password")
+
+        if not username_input or not password_input:
+            print("Could not find login fields. Page title: " + page.title())
+            page.screenshot(path="debug_login.png")
+            browser.close()
+            return
+
+        username_input.fill(LINKEDIN_USERNAME)
         random_delay()
-        page.fill("#password", LINKEDIN_PASSWORD)
+        password_input.fill(LINKEDIN_PASSWORD)
         random_delay()
         page.click("button[type=submit]")
         time.sleep(5)
@@ -57,6 +79,8 @@ def run():
         accept_buttons = page.query_selector_all("button:has-text('Accept')")
         if not accept_buttons:
             accept_buttons = page.query_selector_all("[aria-label*='Accept']")
+        if not accept_buttons:
+            accept_buttons = page.query_selector_all("button:has-text('Accept'), [aria-label*='accept']")
 
         print(f"Pending requests found: {len(accept_buttons)}")
         to_accept = accept_buttons[:MAX_ACCEPT_PER_RUN]
