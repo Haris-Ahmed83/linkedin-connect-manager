@@ -22,81 +22,81 @@ def run():
         )
         page = context.new_page()
 
-        print("Navigating to LinkedIn...")
-        page.goto("https://www.linkedin.com/", timeout=60000, wait_until="domcontentloaded")
-        time.sleep(3)
+        print("Opening LinkedIn login page...")
+        page.goto("https://www.linkedin.com/login", timeout=60000)
+        time.sleep(4)
 
-        current_url = page.url
-        print(f"Current URL: {current_url}")
+        print(f"URL: {page.url}")
 
-        if "/login" in current_url:
-            print("Already on login page. Filling credentials...")
-        else:
-            signin_btn = page.query_selector("a[href*='login'], a:has-text('Sign in'), a:has-text('Sign In')")
-            if signin_btn:
-                print("Clicking Sign in button...")
-                signin_btn.click()
+        email_inputs = page.locator("input[type='email']").all()
+        email_input = None
+        for inp in email_inputs:
+            if inp.is_visible():
+                email_input = inp
+                break
+
+        password_inputs = page.locator("input[type='password']").all()
+        password_input = None
+        for inp in password_inputs:
+            if inp.is_visible():
+                password_input = inp
+                break
+
+        if email_input and password_input:
+            email_input.fill(LINKEDIN_USERNAME)
+            random_delay()
+            password_input.fill(LINKEDIN_PASSWORD)
+            random_delay()
+
+            time.sleep(3)
+            print(f"After fill: {page.url}")
+
+            if "/feed" in page.url:
+                print("Login succeeded during fill!")
+            else:
+                try:
+                    page.click("button[type=submit]", timeout=5000)
+                except:
+                    print("Submit button click timed out, checking URL...")
                 time.sleep(3)
+                print(f"After submit: {page.url}")
 
-        page.wait_for_selector("input[name='session_key'], input[name='username'], #username", timeout=20000)
+            if "checkpoint" in page.url or "challenge" in page.url:
+                print("Challenge page detected. Please solve manually.")
+                browser.close()
+                return
 
-        username_input = page.query_selector("input[name='session_key']") or page.query_selector("#username")
-        password_input = page.query_selector("input[name='session_password']") or page.query_selector("#password")
-
-        if not username_input or not password_input:
-            print("Could not find login fields. Page title: " + page.title())
-            page.screenshot(path="debug_login.png")
+            if "feed" in page.url:
+                print("Login successful!")
+            else:
+                print(f"Login issue. URL: {page.url}")
+                browser.close()
+                return
+        else:
+            print("Login fields not found!")
             browser.close()
             return
 
-        username_input.fill(LINKEDIN_USERNAME)
-        random_delay()
-        password_input.fill(LINKEDIN_PASSWORD)
-        random_delay()
-        page.click("button[type=submit]")
-        time.sleep(5)
-
-        current_url = page.url
-        print(f"After login URL: {current_url}")
-
-        if "checkpoint" in current_url or "challenge" in current_url:
-            print("Login blocked! Challenge/2FA page detected.")
-            page.screenshot(path="debug_challenge.png")
-            browser.close()
-            return
-
-        if "feed" not in current_url and "mynetwork" not in current_url:
-            page.screenshot(path="debug_login_fail.png")
-            print(f"Login may have failed. Page title: {page.title()}")
-            browser.close()
-            return
-
-        print("Login successful.")
-
-        page.goto("https://www.linkedin.com/mynetwork/", timeout=30000, wait_until="domcontentloaded")
+        page.goto("https://www.linkedin.com/mynetwork/", timeout=30000)
         time.sleep(4)
 
         accept_buttons = page.query_selector_all("button:has-text('Accept')")
         if not accept_buttons:
             accept_buttons = page.query_selector_all("[aria-label*='Accept']")
-        if not accept_buttons:
-            accept_buttons = page.query_selector_all("button:has-text('Accept'), [aria-label*='accept']")
 
-        print(f"Pending requests found: {len(accept_buttons)}")
-        to_accept = accept_buttons[:MAX_ACCEPT_PER_RUN]
-
-        for i, btn in enumerate(to_accept):
+        print(f"Pending requests: {len(accept_buttons)}")
+        for btn in accept_buttons[:MAX_ACCEPT_PER_RUN]:
             try:
                 btn.click()
                 random_delay()
                 total_accepted += 1
-                print(f"  Accepted ({i+1}/{len(to_accept)})")
+                print(f"Accepted {total_accepted}")
 
                 msg_btn = page.query_selector("button:has-text('Message')")
                 if msg_btn:
                     msg_btn.click()
                     time.sleep(2)
-                    editor = page.query_selector("div[contenteditable='true'][role='textbox'], div.editor, div[data-placeholder]")
+                    editor = page.query_selector("div[role='textbox'], div[contenteditable='true']")
                     if editor:
                         editor.fill(get_message())
                         random_delay()
@@ -104,18 +104,14 @@ def run():
                         if send_btn:
                             send_btn.click()
                             total_messaged += 1
-                            print(f"  Message sent ({total_messaged})")
+                            print(f"Messaged {total_messaged}")
                             random_delay()
-                    close_btn = page.query_selector("button[aria-label='Close'], button:has-text('Close')")
+                    close_btn = page.query_selector("button[aria-label='Close']")
                     if close_btn:
                         close_btn.click()
                         time.sleep(1)
-                else:
-                    print("  No message button found, skipping message")
-
             except Exception as e:
-                print(f"  Error: {e}")
-                continue
+                print(f"Error: {e}")
 
         browser.close()
 
