@@ -13,7 +13,7 @@ Go to repo → Settings → Secrets and variables → Actions:
 
 | Secret | Value |
 |---|---|
-| `LINKEDIN_EMAIL` | Your LinkedIn email |
+| `LINKEDIN_USERNAME` | Your LinkedIn email or phone number |
 | `LINKEDIN_PASSWORD` | Your LinkedIn password |
 
 ### 2. Test

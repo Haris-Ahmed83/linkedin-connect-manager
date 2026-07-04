@@ -1,5 +1,5 @@
 import time, random
-from config import LINKEDIN_EMAIL, LINKEDIN_PASSWORD, MAX_ACCEPT_PER_RUN, MIN_DELAY_SEC, MAX_DELAY_SEC
+from config import LINKEDIN_USERNAME, LINKEDIN_PASSWORD, MAX_ACCEPT_PER_RUN, MIN_DELAY_SEC, MAX_DELAY_SEC
 from message_template import get_message
 from playwright.sync_api import sync_playwright
 
@@ -7,7 +7,7 @@ def random_delay():
     time.sleep(random.uniform(MIN_DELAY_SEC, MAX_DELAY_SEC))
 
 def run():
-    if not LINKEDIN_EMAIL or not LINKEDIN_PASSWORD:
+    if not LINKEDIN_USERNAME or not LINKEDIN_PASSWORD:
         print("LinkedIn credentials not configured.")
         return
 
@@ -24,7 +24,7 @@ def run():
 
         print("Logging in...")
         page.goto("https://www.linkedin.com/login", timeout=30000)
-        page.fill("#username", LINKEDIN_EMAIL)
+        page.fill("#username", LINKEDIN_USERNAME)
         random_delay()
         page.fill("#password", LINKEDIN_PASSWORD)
         random_delay()
