@@ -99,22 +99,50 @@ def run():
         print(f"Pending requests: {len(accept_buttons)}")
         for btn in accept_buttons[:MAX_ACCEPT_PER_RUN]:
             try:
+                person_name = ""
+                person_headline = ""
+                try:
+                    info = page.evaluate("""
+                        (btn) => {
+                            let el = btn;
+                            for (let i = 0; i < 5; i++) {
+                                if (el.parentElement) el = el.parentElement;
+                            }
+                            const text = el.innerText || '';
+                            const spans = el.querySelectorAll('span:not(:has(*))');
+                            const texts = [];
+                            for (const s of spans) {
+                                const t = s.textContent.trim();
+                                if (t && t.length > 2 && t.length < 60) texts.push(t);
+                            }
+                            return { name: texts[0] || '', headline: texts[1] || '' };
+                        }
+                    """, btn)
+                    person_name = info.get("name", "")
+                    person_headline = info.get("headline", "")
+                except:
+                    pass
+
+                print(f"  Person: {person_name} | {person_headline}")
+
                 btn.click()
                 random_delay()
                 total_accepted += 1
-                print(f"Accepted {total_accepted}")
+
                 msg_btn = page.query_selector("button:has-text('Message')")
                 if msg_btn:
                     msg_btn.click()
                     time.sleep(2)
                     editor = page.query_selector("div[role='textbox'], div[contenteditable='true']")
                     if editor:
-                        editor.fill(get_message())
+                        msg = get_message(person_name, person_headline)
+                        editor.fill(msg)
                         random_delay()
                         send_btn = page.query_selector("button:has-text('Send')")
                         if send_btn:
                             send_btn.click()
                             total_messaged += 1
+                            print(f"  Messaged {total_messaged}")
                             random_delay()
                     close_btn = page.query_selector("button[aria-label='Close']")
                     if close_btn:
