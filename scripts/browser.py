@@ -374,8 +374,8 @@ def login_if_needed(page):
         page.goto("https://www.linkedin.com/login", timeout=60000)
         time.sleep(4)
 
-        email_inp = page.locator("input[type='email']").first
-        pw_inp = page.locator("input[type='password']").first
+        email_inp = page.locator("#username").first
+        pw_inp = page.locator("#password").first
 
         if email_inp.is_visible() and pw_inp.is_visible():
             email_inp.fill(LINKEDIN_USERNAME)
