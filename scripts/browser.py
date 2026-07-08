@@ -401,6 +401,15 @@ def login_if_needed(page):
                 sp(f"Screenshot saved to {debug_path}")
             except Exception as ex:
                 sp(f"Screenshot error: {ex}")
+            # Dump page HTML for debugging
+            try:
+                html = page.content()
+                html_path = os.path.join(os.path.dirname(__file__), "login_debug.html")
+                with open(html_path, "w", encoding="utf-8") as f:
+                    f.write(html)
+                sp(f"HTML saved to {html_path} ({len(html)} chars)")
+            except Exception as ex:
+                sp(f"HTML dump error: {ex}")
             return False
 
     if "checkpoint" in page.url or "challenge" in page.url:

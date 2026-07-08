@@ -46,7 +46,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: login-debug
-          path: scripts/login_debug.png
+          path: |
+            scripts/login_debug.png
+            scripts/login_debug.html
           if-no-files-found: ignore
 
       - name: Commit tracking state back to repo
