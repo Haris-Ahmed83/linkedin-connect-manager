@@ -364,15 +364,31 @@ def check_and_message_connections(page, tracking, now_ts=None):
         sp(f"  Connections check error: {e}")
         return 0
 
-def login_if_needed(page):
+def login_if_needed(page, is_ci=False):
     """Check if logged in, otherwise log in."""
     page.goto("https://www.linkedin.com/feed/", timeout=30000, wait_until="domcontentloaded")
     page.wait_for_timeout(5000)
 
     if "login" in page.url:
         sp("Need to log in...")
+        # Try restoring cookies from CI secret
+        if is_ci:
+            import base64
+            cookie_b64 = os.environ.get("LINKEDIN_COOKIES", "")
+            if cookie_b64:
+                try:
+                    cookies = json.loads(base64.b64decode(cookie_b64).decode())
+                    page.context.add_cookies(cookies)
+                    page.goto("https://www.linkedin.com/feed/", timeout=30000, wait_until="domcontentloaded")
+                    page.wait_for_timeout(5000)
+                    if "login" not in page.url:
+                        sp("Login via cookies successful!")
+                        if "feed" in page.url:
+                            return True
+                except Exception as ex:
+                    sp(f"Cookie restore error: {ex}")
+
         page.goto("https://www.linkedin.com/login", timeout=60000)
-        # Wait for JS-rendered form (up to 30s for module loading)
         email_inp = page.locator("#username, input[name='session_key'], input[type='text'], input[type='email']").first
         pw_inp = page.locator("#password, input[name='session_password'], input[type='password']").first
         try:
@@ -463,7 +479,7 @@ def run(oneshot=False):
         )
         page = context.pages[0] if context.pages else context.new_page()
 
-        if not login_if_needed(page):
+        if not login_if_needed(page, is_ci):
             context.close()
             return
 

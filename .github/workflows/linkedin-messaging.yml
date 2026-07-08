@@ -8,6 +8,7 @@ on:
 env:
   LINKEDIN_USERNAME: ${{ secrets.LINKEDIN_USERNAME }}
   LINKEDIN_PASSWORD: ${{ secrets.LINKEDIN_PASSWORD }}
+  LINKEDIN_COOKIES: ${{ secrets.LINKEDIN_COOKIES }}
 
 jobs:
   message:
