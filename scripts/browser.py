@@ -367,12 +367,13 @@ def check_and_message_connections(page, tracking, now_ts=None):
 def login_if_needed(page):
     """Check if logged in, otherwise log in."""
     page.goto("https://www.linkedin.com/feed/", timeout=30000, wait_until="domcontentloaded")
-    page.wait_for_timeout(4000)
+    page.wait_for_timeout(5000)
 
     if "login" in page.url:
         sp("Need to log in...")
         page.goto("https://www.linkedin.com/login", timeout=60000)
-        page.wait_for_timeout(5000)
+        page.wait_for_selector("form", timeout=15000)
+        page.wait_for_timeout(3000)
 
         # Try multiple selectors (LinkedIn changes these)
         email_inp = page.locator("#username, input[name='session_key'], input[type='text'], input[type='email']").first
@@ -387,13 +388,24 @@ def login_if_needed(page):
             page.wait_for_timeout(8000)
         else:
             sp("Login fields not found - saving screenshot")
+            sp(f"Page title: {page.title()}")
+            sp(f"Page URL: {page.url}")
             try:
                 page.screenshot(path="login_debug.png", full_page=True)
-            except:
-                pass
+                sp("Screenshot saved")
+            except Exception as ex:
+                sp(f"Screenshot error: {ex}")
             return False
 
     if "checkpoint" in page.url or "challenge" in page.url:
+        sp(f"Challenge page detected at: {page.url}")
+        page.wait_for_timeout(5000)
+        try:
+            page.screenshot(path="login_debug.png", full_page=True)
+            sp("Challenge screenshot saved")
+        except:
+            pass
+        return False
         sp("Challenge page detected. Waiting...")
         for _ in range(36):
             page.wait_for_timeout(5000)
@@ -435,12 +447,20 @@ def run(oneshot=False):
 
     is_ci = os.environ.get("GITHUB_ACTIONS") == "true"
     with sync_playwright() as p:
+        args = []
+        if is_ci:
+            args = ["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"]
+        else:
+            args = ["--window-position=-32000,-32000"]
         context = p.chromium.launch_persistent_context(
             PROFILE_DIR if not is_ci else "",
             headless=is_ci,
-            args=[] if is_ci else ["--window-position=-32000,-32000"],
-            viewport={"width": 1280, "height": 800},
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            args=args,
+            viewport={"width": 1366, "height": 768},
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            locale="en-US",
+            timezone_id="Asia/Karachi",
+            bypass_csp=True
         )
         page = context.pages[0] if context.pages else context.new_page()
 

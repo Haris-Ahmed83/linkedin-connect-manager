@@ -31,6 +31,14 @@ jobs:
         run: python scripts/main.py --oneshot
         timeout-minutes: 10
 
+      - name: Upload debug screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: login-debug
+          path: scripts/login_debug.png
+          if-no-files-found: ignore
+
       - name: Commit tracking state back to repo
         run: |
           git config user.name "GitHub Actions"
