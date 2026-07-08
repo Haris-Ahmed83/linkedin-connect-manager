@@ -372,45 +372,33 @@ def login_if_needed(page):
     if "login" in page.url:
         sp("Need to log in...")
         page.goto("https://www.linkedin.com/login", timeout=60000)
-        page.wait_for_timeout(8000)
-        debug_path = os.path.join(os.path.dirname(__file__), "login_debug.png")
-        try:
-            page.screenshot(path=debug_path, full_page=True)
-            sp(f"Screenshot saved to {debug_path}")
-        except Exception as ex:
-            sp(f"Screenshot error: {ex}")
-
-        # Try multiple selectors (LinkedIn changes these)
+        # Wait for JS-rendered form (up to 30s for module loading)
         email_inp = page.locator("#username, input[name='session_key'], input[type='text'], input[type='email']").first
         pw_inp = page.locator("#password, input[name='session_password'], input[type='password']").first
-
-        if email_inp.is_visible(timeout=5000) and pw_inp.is_visible(timeout=5000):
-            email_inp.fill(LINKEDIN_USERNAME)
-            random_delay()
-            pw_inp.fill(LINKEDIN_PASSWORD)
-            random_delay()
-            page.keyboard.press("Enter")
-            page.wait_for_timeout(8000)
-        else:
-            sp("Login fields not found - saving screenshot")
+        try:
+            email_inp.wait_for(state="visible", timeout=30000)
+            pw_inp.wait_for(state="visible", timeout=30000)
+        except:
+            sp("Login fields not found after 30s - saving debug info")
             sp(f"Page title: {page.title()}")
             sp(f"Page URL: {page.url}")
             try:
                 debug_path = os.path.join(os.path.dirname(__file__), "login_debug.png")
                 page.screenshot(path=debug_path, full_page=True)
-                sp(f"Screenshot saved to {debug_path}")
-            except Exception as ex:
-                sp(f"Screenshot error: {ex}")
-            # Dump page HTML for debugging
-            try:
-                html = page.content()
                 html_path = os.path.join(os.path.dirname(__file__), "login_debug.html")
                 with open(html_path, "w", encoding="utf-8") as f:
-                    f.write(html)
-                sp(f"HTML saved to {html_path} ({len(html)} chars)")
+                    f.write(page.content())
+                sp("Debug files saved")
             except Exception as ex:
-                sp(f"HTML dump error: {ex}")
+                sp(f"Debug save error: {ex}")
             return False
+
+        email_inp.fill(LINKEDIN_USERNAME)
+        random_delay()
+        pw_inp.fill(LINKEDIN_PASSWORD)
+        random_delay()
+        page.keyboard.press("Enter")
+        page.wait_for_timeout(8000)
 
     if "checkpoint" in page.url or "challenge" in page.url:
         sp(f"Challenge page detected at: {page.url}")
@@ -422,12 +410,6 @@ def login_if_needed(page):
         except:
             pass
         return False
-        sp("Challenge page detected. Waiting...")
-        for _ in range(36):
-            page.wait_for_timeout(5000)
-            if "feed" in page.url:
-                sp("Challenge resolved.")
-                break
 
     if "feed" not in page.url:
         sp(f"Login issue: {page.url}")
