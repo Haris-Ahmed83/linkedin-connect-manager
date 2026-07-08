@@ -364,7 +364,7 @@ def check_and_message_connections(page, tracking, now_ts=None):
         sp(f"  Connections check error: {e}")
         return 0
 
-def login_if_needed(page, is_ci=False):
+def login_if_needed(page, is_ci=False, is_self_hosted=False):
     """Check if logged in, otherwise log in."""
     page.goto("https://www.linkedin.com/feed/", timeout=30000, wait_until="domcontentloaded")
     page.wait_for_timeout(5000)
@@ -484,7 +484,7 @@ def run(oneshot=False):
         )
         page = context.pages[0] if context.pages else context.new_page()
 
-        if not login_if_needed(page, is_ci):
+        if not login_if_needed(page, is_ci, is_self_hosted):
             context.close()
             return
 
