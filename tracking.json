@@ -31,7 +31,8 @@
     "Yasfa Zafar",
     "Dr. Ajab Khan",
     "Faizan Khan",
-    "Muhammad Sharjeel"
+    "Muhammad Sharjeel",
+    "Amir Moradi"
   ],
   "prev_sent": [
     {
@@ -70,11 +71,6 @@
       "headline": "Professur f\u00fcr explainable AI"
     },
     {
-      "name": "Amir Moradi",
-      "href": "https://www.linkedin.com/in/amir-moradi-579147223/",
-      "headline": "Professor of Implementation Security at TU Darmstadt"
-    },
-    {
       "name": "Marta Gomez-Barrero",
       "href": "https://www.linkedin.com/in/martagomezbarrero/",
       "headline": "Full Professor for Machine Learning @ Research Institute CODE, Universit\u00e4t der Bundeswehr M\u00fcnchen"
@@ -83,6 +79,11 @@
       "name": "Simone Fulda",
       "href": "https://www.linkedin.com/in/simone-fulda-3344ab303/",
       "headline": "Universit\u00e4tsprofessorin bei Christian-Albrechts-Universit\u00e4t zu Kiel"
+    },
+    {
+      "name": "Semih Cayci",
+      "href": "https://www.linkedin.com/in/semih-cayci/",
+      "headline": "Assistant Professor"
     }
   ],
   "failed_retry": {

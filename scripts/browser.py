@@ -54,6 +54,7 @@ def get_api():
             me = api.get_user_profile()
             name = me.get('miniProfile', {}).get('firstName', '') or me.get('firstName', {}).get('localized', {}).get('en_US', '')
             sp(f"Logged in via cookies as {name}")
+            sp(f"  Profile keys: {list(me.keys())}")
             return api
         except Exception as ex:
             sp(f"Cookie login failed: {ex}")
@@ -135,7 +136,12 @@ def run(oneshot=False):
     # === PART 2: Check connections for new people ===
     sp("Checking connections for new people...")
     try:
-        conns = api.search_people(network_depths=["F"], limit=100)
+        # Get my profile to find correct URN format
+        me_profile = api.get_user_profile()
+        my_id = me_profile.get("id", me_profile.get("urn_id", ""))
+        sp(f"  Profile ID: {my_id}")
+        conns = api.get_profile_connections(my_id, limit=100)
+        sp(f"  Connection check: got {len(conns)} results")
     except Exception as ex:
         sp(f"  Error fetching connections: {ex}")
         conns = []
