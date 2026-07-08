@@ -459,9 +459,10 @@ def run(oneshot=False):
             args = ["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"]
         else:
             args = ["--window-position=-32000,-32000"]
+        profile_dir = ".chromium-profile" if is_ci else PROFILE_DIR
         context = p.chromium.launch_persistent_context(
-            PROFILE_DIR if not is_ci else "",
-            headless=is_ci,
+            profile_dir,
+            headless=False,   # xvfb in CI, off-screen locally
             args=args,
             viewport={"width": 1366, "height": 768},
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
