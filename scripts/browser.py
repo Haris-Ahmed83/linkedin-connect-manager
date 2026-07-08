@@ -452,12 +452,13 @@ def run(oneshot=False):
     is_self_hosted = is_ci and sys.platform == "win32"
 
     # Copy profile to temp to avoid locking original
-    import shutil
-    import tempfile
+    import shutil, tempfile, subprocess
     profile_src = PROFILE_DIR
     if is_self_hosted and os.path.exists(profile_src):
         profile_dir = tempfile.mkdtemp(prefix="linkedin_profile_")
-        shutil.copytree(profile_src, profile_dir, dirs_exist_ok=True, ignore_dangling_symlinks=True)
+        subprocess.run(
+            ['robocopy', profile_src, profile_dir, '/E', '/R:0', '/W:0', '/NP', '/NS', '/NC', '/NFL', '/NDL'],
+            capture_output=True, timeout=60)
         sp(f"Copied profile to temp: {profile_dir}")
     else:
         profile_dir = PROFILE_DIR
