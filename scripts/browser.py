@@ -372,9 +372,13 @@ def login_if_needed(page):
     if "login" in page.url:
         sp("Need to log in...")
         page.goto("https://www.linkedin.com/login", timeout=60000)
-        page.wait_for_timeout(5000)
-        page.screenshot(path="login_debug.png", full_page=True)
-        sp("Screenshot saved")
+        page.wait_for_timeout(8000)
+        debug_path = os.path.join(os.path.dirname(__file__), "login_debug.png")
+        try:
+            page.screenshot(path=debug_path, full_page=True)
+            sp(f"Screenshot saved to {debug_path}")
+        except Exception as ex:
+            sp(f"Screenshot error: {ex}")
 
         # Try multiple selectors (LinkedIn changes these)
         email_inp = page.locator("#username, input[name='session_key'], input[type='text'], input[type='email']").first
@@ -392,8 +396,9 @@ def login_if_needed(page):
             sp(f"Page title: {page.title()}")
             sp(f"Page URL: {page.url}")
             try:
-                page.screenshot(path="login_debug.png", full_page=True)
-                sp("Screenshot saved")
+                debug_path = os.path.join(os.path.dirname(__file__), "login_debug.png")
+                page.screenshot(path=debug_path, full_page=True)
+                sp(f"Screenshot saved to {debug_path}")
             except Exception as ex:
                 sp(f"Screenshot error: {ex}")
             return False
@@ -402,7 +407,8 @@ def login_if_needed(page):
         sp(f"Challenge page detected at: {page.url}")
         page.wait_for_timeout(5000)
         try:
-            page.screenshot(path="login_debug.png", full_page=True)
+            debug_path = os.path.join(os.path.dirname(__file__), "login_debug.png")
+            page.screenshot(path=debug_path, full_page=True)
             sp("Challenge screenshot saved")
         except:
             pass
