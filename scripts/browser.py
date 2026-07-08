@@ -448,24 +448,20 @@ def run(oneshot=False):
     total_messaged = 0
     tracking = load_tracking()
 
-    # Kill orphaned Playwright Chrome processes that may lock the profile
-    try:
-        import subprocess
-        result = subprocess.run(
-            ['wmic', 'process', 'where', 'name="chrome.exe"', 'get', 'ProcessId,CommandLine', '/format:csv'],
-            capture_output=True, text=True, timeout=10
-        )
-        for line in result.stdout.split('\n'):
-            if 'linkedin_profile' in line and 'ms-playwright' in line:
-                parts = line.strip().split(',')
-                for p in parts:
-                    if p.strip().isdigit():
-                        os.system(f"taskkill /F /PID {p.strip()} >nul 2>&1")
-    except:
-        pass
-
     is_ci = os.environ.get("GITHUB_ACTIONS") == "true"
     is_self_hosted = is_ci and sys.platform == "win32"
+
+    # Copy profile to temp to avoid locking original
+    import shutil
+    import tempfile
+    profile_src = PROFILE_DIR
+    if is_self_hosted and os.path.exists(profile_src):
+        profile_dir = tempfile.mkdtemp(prefix="linkedin_profile_")
+        shutil.copytree(profile_src, profile_dir, dirs_exist_ok=True, ignore_dangling_symlinks=True)
+        sp(f"Copied profile to temp: {profile_dir}")
+    else:
+        profile_dir = PROFILE_DIR
+
     with sync_playwright() as p:
         args = []
         if is_ci and not is_self_hosted:
@@ -473,7 +469,7 @@ def run(oneshot=False):
         else:
             args = ["--window-position=-32000,-32000"]
         context = p.chromium.launch_persistent_context(
-            PROFILE_DIR,   # self-hosted profile or local profile
+            profile_dir,
             headless=False,
             args=args,
             viewport={"width": 1366, "height": 768},
@@ -564,5 +560,10 @@ def run(oneshot=False):
         else:
             sp("  Oneshot mode — skipping continuous monitoring")
             context.close()
+
+    # Cleanup temp profile
+    if is_self_hosted and profile_dir != PROFILE_DIR and os.path.exists(profile_dir):
+        shutil.rmtree(profile_dir, ignore_errors=True)
+        sp("Cleaned up temp profile")
 
     sp(f"\nFinal: Accepted: {total_accepted}, Messaged: {total_messaged}")

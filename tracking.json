@@ -33,7 +33,58 @@
     "Faizan Khan",
     "Muhammad Sharjeel"
   ],
-  "prev_sent": [],
+  "prev_sent": [
+    {
+      "name": "Aman Jadoon",
+      "href": "https://www.linkedin.com/in/aman-jadoon-75a367322/",
+      "headline": "London "
+    },
+    {
+      "name": "Mathias Paschen",
+      "href": "https://www.linkedin.com/in/mathias-paschen-139a9a156/",
+      "headline": "Professor Emeritus at Universit\u00e4t Rostock"
+    },
+    {
+      "name": "Hans-Juergen Thiesen",
+      "href": "https://www.linkedin.com/in/hans-juergen-thiesen-3a615a104/",
+      "headline": "Retired September 30th, 2022 as Director  Institute of Immunology, University of Rostock"
+    },
+    {
+      "name": "Radu Timofte",
+      "href": "https://www.linkedin.com/in/radutimofte/",
+      "headline": "Humboldt Professor for AI and Computer Vision at University of Wurzburg"
+    },
+    {
+      "name": "Marco Zimmerling",
+      "href": "https://www.linkedin.com/in/marco-zimmerling-22762270/",
+      "headline": "Full Professor at TU Darmstadt"
+    },
+    {
+      "name": "Marc Reichenbach",
+      "href": "https://www.linkedin.com/in/marc-reichenbach/",
+      "headline": "From bits to breakthroughs \u2014 computing for a better tomorrow."
+    },
+    {
+      "name": "Biying Fu",
+      "href": "https://www.linkedin.com/in/biying-fu-576299123/",
+      "headline": "Professur f\u00fcr explainable AI"
+    },
+    {
+      "name": "Amir Moradi",
+      "href": "https://www.linkedin.com/in/amir-moradi-579147223/",
+      "headline": "Professor of Implementation Security at TU Darmstadt"
+    },
+    {
+      "name": "Marta Gomez-Barrero",
+      "href": "https://www.linkedin.com/in/martagomezbarrero/",
+      "headline": "Full Professor for Machine Learning @ Research Institute CODE, Universit\u00e4t der Bundeswehr M\u00fcnchen"
+    },
+    {
+      "name": "Simone Fulda",
+      "href": "https://www.linkedin.com/in/simone-fulda-3344ab303/",
+      "headline": "Universit\u00e4tsprofessorin bei Christian-Albrechts-Universit\u00e4t zu Kiel"
+    }
+  ],
   "failed_retry": {
     "Mehnaz Rustam": 1783254514.6154566,
     "Yhen Faith Gagan": 1783447397.7276225,
