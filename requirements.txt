@@ -1,1 +1,2 @@
-playwright
+linkedin-api
+python-dotenv
