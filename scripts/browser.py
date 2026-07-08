@@ -24,7 +24,7 @@ def save_tracking(data):
 
 def sp(text):
     safe = text.encode(sys.stdout.encoding, errors='replace').decode(sys.stdout.encoding)
-    print(safe)
+    print(safe, flush=True)
 
 def get_all_connections(page):
     """Scrape LinkedIn search for all 1st degree connections."""
