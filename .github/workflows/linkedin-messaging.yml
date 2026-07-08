@@ -12,22 +12,22 @@ env:
 jobs:
   message:
     runs-on: [self-hosted, windows]
-    defaults:
-      run:
-        shell: powershell
     steps:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
+        shell: cmd
         run: |
           pip install playwright python-dotenv
           playwright install chromium
 
       - name: Run messaging script
-        run: python scripts/main.py --oneshot
+        shell: cmd
+        run: python scripts\main.py --oneshot
         timeout-minutes: 15
 
       - name: Commit tracking state back to repo
+        shell: cmd
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
