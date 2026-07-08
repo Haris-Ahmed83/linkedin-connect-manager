@@ -8,41 +8,24 @@ on:
 env:
   LINKEDIN_USERNAME: ${{ secrets.LINKEDIN_USERNAME }}
   LINKEDIN_PASSWORD: ${{ secrets.LINKEDIN_PASSWORD }}
-  LINKEDIN_COOKIES: ${{ secrets.LINKEDIN_COOKIES }}
 
 jobs:
   message:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
+    runs-on: [self-hosted, windows]
+    defaults:
+      run:
+        shell: powershell
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
       - name: Install dependencies
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq xvfb
           pip install playwright python-dotenv
           playwright install chromium
 
       - name: Run messaging script
-        run: xvfb-run -a python scripts/main.py --oneshot
-        timeout-minutes: 10
-
-      - name: Upload debug screenshot
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: login-debug
-          path: |
-            scripts/login_debug.png
-            scripts/login_debug.html
-          if-no-files-found: ignore
+        run: python scripts/main.py --oneshot
+        timeout-minutes: 15
 
       - name: Commit tracking state back to repo
         run: |

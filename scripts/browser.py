@@ -371,8 +371,8 @@ def login_if_needed(page, is_ci=False):
 
     if "login" in page.url:
         sp("Need to log in...")
-        # Try restoring cookies from CI secret
-        if is_ci:
+        # Try restoring cookies from CI secret (only on hosted CI, not self-hosted)
+        if is_ci and not is_self_hosted:
             import base64
             cookie_b64 = os.environ.get("LINKEDIN_COOKIES", "")
             if cookie_b64:
@@ -465,15 +465,16 @@ def run(oneshot=False):
         pass
 
     is_ci = os.environ.get("GITHUB_ACTIONS") == "true"
+    is_self_hosted = is_ci and sys.platform == "win32"
     with sync_playwright() as p:
         args = []
-        if is_ci:
+        if is_ci and not is_self_hosted:
             args = ["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"]
         else:
             args = ["--window-position=-32000,-32000"]
         context = p.chromium.launch_persistent_context(
-            "" if is_ci else PROFILE_DIR,   # fresh empty profile in CI
-            headless=False,   # xvfb in CI, off-screen locally
+            PROFILE_DIR,   # self-hosted profile or local profile
+            headless=False,
             args=args,
             viewport={"width": 1366, "height": 768},
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
