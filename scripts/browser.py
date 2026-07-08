@@ -372,12 +372,13 @@ def login_if_needed(page):
     if "login" in page.url:
         sp("Need to log in...")
         page.goto("https://www.linkedin.com/login", timeout=60000)
-        time.sleep(4)
+        page.wait_for_timeout(5000)
 
-        email_inp = page.locator("#username").first
-        pw_inp = page.locator("#password").first
+        # Try multiple selectors (LinkedIn changes these)
+        email_inp = page.locator("#username, input[name='session_key'], input[type='text'], input[type='email']").first
+        pw_inp = page.locator("#password, input[name='session_password'], input[type='password']").first
 
-        if email_inp.is_visible() and pw_inp.is_visible():
+        if email_inp.is_visible(timeout=5000) and pw_inp.is_visible(timeout=5000):
             email_inp.fill(LINKEDIN_USERNAME)
             random_delay()
             pw_inp.fill(LINKEDIN_PASSWORD)
@@ -385,7 +386,11 @@ def login_if_needed(page):
             page.keyboard.press("Enter")
             page.wait_for_timeout(8000)
         else:
-            sp("Login fields not found")
+            sp("Login fields not found - saving screenshot")
+            try:
+                page.screenshot(path="login_debug.png", full_page=True)
+            except:
+                pass
             return False
 
     if "checkpoint" in page.url or "challenge" in page.url:
