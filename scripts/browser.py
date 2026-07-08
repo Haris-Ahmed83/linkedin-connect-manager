@@ -372,8 +372,9 @@ def login_if_needed(page):
     if "login" in page.url:
         sp("Need to log in...")
         page.goto("https://www.linkedin.com/login", timeout=60000)
-        page.wait_for_selector("form", timeout=15000)
-        page.wait_for_timeout(3000)
+        page.wait_for_timeout(5000)
+        page.screenshot(path="login_debug.png", full_page=True)
+        sp("Screenshot saved")
 
         # Try multiple selectors (LinkedIn changes these)
         email_inp = page.locator("#username, input[name='session_key'], input[type='text'], input[type='email']").first
