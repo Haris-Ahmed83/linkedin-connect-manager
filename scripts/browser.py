@@ -52,7 +52,8 @@ def get_api():
                            authenticate=True, cookies=jar,
                            cookies_dir=COOKIES_DIR)
             me = api.get_user_profile()
-            sp(f"Logged in via cookies as {me.get('firstName',{}).get('localized',{}).get('en_US','')}")
+            name = me.get('miniProfile', {}).get('firstName', '') or me.get('firstName', {}).get('localized', {}).get('en_US', '')
+            sp(f"Logged in via cookies as {name}")
             return api
         except Exception as ex:
             sp(f"Cookie login failed: {ex}")
@@ -134,7 +135,7 @@ def run(oneshot=False):
     # === PART 2: Check connections for new people ===
     sp("Checking connections for new people...")
     try:
-        conns = api.get_profile_connections(my_urn, limit=100)
+        conns = api.search_people(network_depths=["F"], limit=100)
     except Exception as ex:
         sp(f"  Error fetching connections: {ex}")
         conns = []
