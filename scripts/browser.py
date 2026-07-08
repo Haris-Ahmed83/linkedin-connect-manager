@@ -382,14 +382,13 @@ def login_if_needed(page, is_ci=False):
                     page.goto("https://www.linkedin.com/feed/", timeout=30000, wait_until="domcontentloaded")
                     page.wait_for_timeout(5000)
                     if "login" not in page.url:
+                        if "checkpoint" in page.url or "challenge" in page.url:
+                            sp("Security challenge after cookie login — cannot automate")
+                            page.screenshot(path=os.path.join(os.path.dirname(__file__), "login_debug.png"), full_page=True)
+                            return False
                         sp("Login via cookies successful!")
-                        # Wait for feed to fully render (up to 15s for React)
                         page.wait_for_timeout(5000)
                         if "feed" in page.url:
-                            # Verify feed actually loaded (not security page)
-                            page.wait_for_timeout(3000)
-                            if "security" in page.url.lower() or "checkpoint" in page.url.lower():
-                                sp("Security challenge detected after cookie login")
                             return True
                 except Exception as ex:
                     sp(f"Cookie restore error: {ex}")
@@ -472,9 +471,8 @@ def run(oneshot=False):
             args = ["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"]
         else:
             args = ["--window-position=-32000,-32000"]
-        profile_dir = ".chromium-profile" if is_ci else PROFILE_DIR
         context = p.chromium.launch_persistent_context(
-            profile_dir,
+            "" if is_ci else PROFILE_DIR,   # fresh empty profile in CI
             headless=False,   # xvfb in CI, off-screen locally
             args=args,
             viewport={"width": 1366, "height": 768},
