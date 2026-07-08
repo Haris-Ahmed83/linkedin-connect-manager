@@ -371,8 +371,8 @@ def login_if_needed(page, is_ci=False, is_self_hosted=False):
 
     if "login" in page.url:
         sp("Need to log in...")
-        # Try restoring cookies from CI secret (only on hosted CI, not self-hosted)
-        if is_ci and not is_self_hosted:
+        # Try restoring cookies from CI secret
+        if is_ci:
             import base64
             cookie_b64 = os.environ.get("LINKEDIN_COOKIES", "")
             if cookie_b64:
@@ -451,18 +451,6 @@ def run(oneshot=False):
     is_ci = os.environ.get("GITHUB_ACTIONS") == "true"
     is_self_hosted = is_ci and sys.platform == "win32"
 
-    # Copy profile to temp to avoid locking original
-    import shutil, tempfile, subprocess
-    profile_src = PROFILE_DIR
-    if is_self_hosted and os.path.exists(profile_src):
-        profile_dir = tempfile.mkdtemp(prefix="linkedin_profile_")
-        subprocess.run(
-            ['robocopy', profile_src, profile_dir, '/E', '/R:0', '/W:0', '/NP', '/NS', '/NC', '/NFL', '/NDL'],
-            capture_output=True, timeout=60)
-        sp(f"Copied profile to temp: {profile_dir}")
-    else:
-        profile_dir = PROFILE_DIR
-
     with sync_playwright() as p:
         args = []
         if is_ci and not is_self_hosted:
@@ -470,7 +458,8 @@ def run(oneshot=False):
         else:
             args = ["--window-position=-32000,-32000"]
         context = p.chromium.launch_persistent_context(
-            profile_dir,
+            "" if is_self_hosted else PROFILE_DIR,
+            headless=False,
             headless=False,
             args=args,
             viewport={"width": 1366, "height": 768},
@@ -563,8 +552,4 @@ def run(oneshot=False):
             context.close()
 
     # Cleanup temp profile
-    if is_self_hosted and profile_dir != PROFILE_DIR and os.path.exists(profile_dir):
-        shutil.rmtree(profile_dir, ignore_errors=True)
-        sp("Cleaned up temp profile")
-
     sp(f"\nFinal: Accepted: {total_accepted}, Messaged: {total_messaged}")

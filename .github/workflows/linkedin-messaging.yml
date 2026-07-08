@@ -12,6 +12,8 @@ env:
 jobs:
   message:
     runs-on: [self-hosted, windows]
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -28,6 +30,8 @@ jobs:
 
       - name: Commit tracking state back to repo
         shell: cmd
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
